@@ -1,0 +1,44 @@
+{
+  "name": "mailsift-ai",
+  "version": "1.0.0",
+  "description": "AI-powered email prioritization and summarization Chrome extension",
+  "main": "content.js",
+  "scripts": {
+    "build": "echo 'No build process needed for this extension'",
+    "dev": "echo 'Load extension in Chrome with developer mode enabled'",
+    "test": "echo 'Manual testing required - test on Gmail, Outlook, and Yahoo Mail'",
+    "lint": "echo 'Consider adding ESLint for code quality'",
+    "package": "zip -r mailsift-ai.zip . -x '*.git*' 'node_modules/*' '*.DS_Store' 'README.md' 'package.json' 'package-lock.json'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "email",
+    "ai",
+    "productivity",
+    "gmail",
+    "outlook",
+    "yahoo",
+    "openai",
+    "gpt-4",
+    "email-prioritization",
+    "email-summarization"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/mailsift-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/mailsift-ai/issues"
+  },
+  "homepage": "https://github.com/yourusername/mailsift-ai#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "browserslist": [
+    "Chrome >= 88"
+  ]
+} 

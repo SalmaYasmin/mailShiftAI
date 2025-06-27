@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "MailSift AI",
+  "version": "1.0.0",
+  "description": "AI-powered email prioritization and summarization for Gmail, Outlook, and Yahoo Mail",
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office.com/*",
+    "https://mail.yahoo.com/*",
+    "https://api.openai.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://mail.yahoo.com/*"
+      ],
+      "js": [
+        "utils/email-detector.js",
+        "utils/email-extractor.js",
+        "utils/email-prioritizer.js",
+        "utils/widget-manager.js",
+        "summarizer.js",
+        "content.js"
+      ],
+      "css": ["styles/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MailSift AI Settings"
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["widget.html", "styles/widget.css", "welcome.html"],
+      "matches": [
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://mail.yahoo.com/*"
+      ]
+    }
+  ]
+} 
