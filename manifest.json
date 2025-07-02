@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MailSift AI",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered email prioritization and summarization for Gmail, Outlook, and Yahoo Mail",
   
   "permissions": [
