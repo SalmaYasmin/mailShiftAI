@@ -172,6 +172,52 @@ html, body {
   border: 1px dashed #dee2e6;
 }
 
+/* API Key */
+.api-key-container {
+  margin-top: 12px;
+}
+
+.api-key-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.api-key-input-group input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  transition: border-color 0.2s;
+}
+
+.api-key-input-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.api-key-status {
+  margin-bottom: 8px;
+}
+
+.api-key-info {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.api-key-info a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.api-key-info a:hover {
+  text-decoration: underline;
+}
+
 /* Settings */
 .setting-item {
   display: flex;

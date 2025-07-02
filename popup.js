@@ -39,13 +39,16 @@ class PopupManager {
    */
   async loadData() {
     try {
-      const result = await chrome.storage.sync.get(['keywords', 'settings', 'consentGiven']);
+      const result = await chrome.storage.sync.get(['keywords', 'settings', 'consentGiven', 'openaiApiKey']);
       
       this.keywords = result.keywords || [];
       this.settings = { ...this.settings, ...result.settings };
       
       // Update consent status
       this.updateConsentStatus(result.consentGiven);
+      
+      // Update API key status
+      this.updateApiKeyStatus(result.openaiApiKey);
       
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -73,6 +76,12 @@ class PopupManager {
 
     document.getElementById('widgetToggle').addEventListener('change', (e) => {
       this.updateSetting('widgetEnabled', e.target.checked);
+    });
+
+    // API key management
+    document.getElementById('saveApiKeyBtn').addEventListener('click', () => this.saveApiKey());
+    document.getElementById('apiKeyInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') this.saveApiKey();
     });
 
     // Action buttons
@@ -226,6 +235,55 @@ class PopupManager {
       statusElement.textContent = 'No Consent';
       statusElement.className = 'status-badge status-warning';
       updateBtn.style.display = 'inline-block';
+    }
+  }
+
+  /**
+   * Update API key status display
+   */
+  updateApiKeyStatus(apiKey) {
+    const statusElement = document.getElementById('apiKeyStatus');
+    const inputElement = document.getElementById('apiKeyInput');
+    
+    if (apiKey && apiKey !== 'sk-your-openai-api-key-here' && apiKey.startsWith('sk-')) {
+      statusElement.textContent = '✅ Configured';
+      statusElement.className = 'status-badge status-success';
+      inputElement.value = apiKey.substring(0, 7) + '...' + apiKey.substring(apiKey.length - 4);
+    } else {
+      statusElement.textContent = '❌ Not configured';
+      statusElement.className = 'status-badge status-warning';
+      inputElement.value = '';
+    }
+  }
+
+  /**
+   * Save API key
+   */
+  async saveApiKey() {
+    const input = document.getElementById('apiKeyInput');
+    const apiKey = input.value.trim();
+    
+    if (!apiKey) {
+      this.showError('Please enter an API key');
+      return;
+    }
+
+    if (!apiKey.startsWith('sk-')) {
+      this.showError('Invalid API key format. Should start with "sk-"');
+      return;
+    }
+
+    try {
+      await chrome.storage.sync.set({ openaiApiKey: apiKey });
+      this.updateApiKeyStatus(apiKey);
+      
+      // Notify content script to update API key
+      await this.notifyContentScript('updateApiKey', apiKey);
+      
+      this.showSuccess('API key saved successfully');
+    } catch (error) {
+      console.error('Failed to save API key:', error);
+      this.showError('Failed to save API key');
     }
   }
 

@@ -47,6 +47,9 @@ class MailSiftAI {
       // Initialize components
       await this.prioritizer.loadSettings();
       
+      // Load API key for summarizer
+      await this.loadApiKey();
+      
       // Set up email extraction observer
       this.extractor.onEmailsUpdated = this.handleEmailsUpdated;
       this.extractor.startObserving();
@@ -155,6 +158,20 @@ class MailSiftAI {
   }
 
   /**
+   * Load API key from storage
+   */
+  async loadApiKey() {
+    try {
+      const result = await chrome.storage.sync.get(['openaiApiKey']);
+      if (result.openaiApiKey) {
+        this.summarizer.setApiKey(result.openaiApiKey);
+      }
+    } catch (error) {
+      console.warn('Failed to load API key:', error);
+    }
+  }
+
+  /**
    * Process emails: extract, prioritize, and display
    */
   async processEmails() {
@@ -257,10 +274,26 @@ class MailSiftAI {
         // Update widget with summary
         this.widgetManager.updateSummary(emailId, summary);
         console.log('Email summarized successfully');
+      } else {
+        throw new Error('No summary generated');
       }
     } catch (error) {
       console.error('Failed to summarize email:', error);
-      this.widgetManager.showError('Failed to summarize email. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to summarize email. Please try again.';
+      
+      if (error.message.includes('API request failed')) {
+        if (!this.summarizer.isApiKeyConfigured()) {
+          errorMessage = 'OpenAI API key not configured. Please set your API key in the extension settings.';
+        } else {
+          errorMessage = 'OpenAI API request failed. Please check your API key and try again.';
+        }
+      } else if (error.message.includes('No summary generated')) {
+        errorMessage = 'Unable to generate summary. Please try again.';
+      }
+      
+      this.widgetManager.showError(errorMessage);
     }
   }
 
@@ -384,7 +417,7 @@ window.addEventListener('beforeunload', () => {
 
 console.log('MailSift AI: Content script loaded');
 
-// Listen for messages from the popup to scroll to an email
+// Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'gotoEmail' && message.emailId) {
     console.log('Content script: Received gotoEmail for', message.emailId);
@@ -398,6 +431,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       setTimeout(() => emailElement.classList.remove('mailsift-highlighted'), 2000);
     } else {
       console.warn('Content script: Could not find email element for', message.emailId);
+    }
+  } else if (message.action === 'updateApiKey' && message.data) {
+    console.log('Content script: Updating API key');
+    if (mailSiftAI && mailSiftAI.summarizer) {
+      mailSiftAI.summarizer.setApiKey(message.data);
     }
   }
 }); 

@@ -10,6 +10,7 @@ class WidgetManager {
     this.isMinimized = false;
     this.topEmails = [];
     this.summaries = {};
+    this.expandedSummaries = {};
   }
 
   /**
@@ -179,18 +180,28 @@ class WidgetManager {
       return;
     }
 
-    console.log('WidgetManager: Rendering', topEmails.length, 'emails in widget');
+    // Track expanded state per email
+    if (!this.expandedSummaries) this.expandedSummaries = {};
+
     const emailsHtml = topEmails.map((email, index) => {
       const summary = this.summaries[email.id] || '';
       const hasSummary = summary.length > 0;
-      
-      console.log(`WidgetManager: Rendering email ${index + 1}:`, {
-        id: email.id,
-        subject: email.subject,
-        sender: email.sender,
-        priority: email.priority
-      });
-      
+      const isExpanded = !!this.expandedSummaries[email.id];
+      let summaryHtml = '';
+      if (hasSummary) {
+        const preview = summary.substring(0, 100);
+        const rest = summary.substring(100);
+        summaryHtml = `
+          <div class="mailsift-email-summary">
+            <div class="mailsift-summary-toggle${isExpanded ? ' expanded' : ''}" data-summary-toggle="true" data-email-id="${email.id}">
+              <span class="mailsift-summary-preview" style="${isExpanded ? 'display:none;' : ''}">${this.truncateText(preview, 100)}${rest ? '...' : ''}</span>
+              <span class="mailsift-summary-full" style="${isExpanded ? 'display:inline;' : 'display:none;'}">${this.escapeHtml(summary)}</span>
+              <span class="mailsift-toggle-icon">${isExpanded ? '▲' : '▼'}</span>
+              <span class="mailsift-toggle-text">${isExpanded ? 'Show less' : 'Show more'}</span>
+            </div>
+          </div>
+        `;
+      }
       return `
         <div class="mailsift-email-item" data-email-id="${email.id}">
           <div class="mailsift-email-header">
@@ -199,17 +210,7 @@ class WidgetManager {
             <span class="mailsift-email-time">${this.formatTime(email.timestamp)}</span>
           </div>
           <div class="mailsift-email-subject">${this.truncateText(email.subject, 50)}</div>
-          ${hasSummary ? `
-            <div class="mailsift-email-summary">
-              <div class="mailsift-summary-toggle" data-summary-toggle="true">
-                <span class="mailsift-summary-preview">${this.truncateText(summary, 80)}</span>
-                <span class="mailsift-summary-full" style="display: none;">${summary}</span>
-                <span class="mailsift-toggle-icon">▼</span>
-              </div>
-            </div>
-          ` : `
-            <div class="mailsift-email-snippet">${this.truncateText(email.content, 60)}</div>
-          `}
+          ${hasSummary ? summaryHtml : `<div class="mailsift-email-snippet">${this.truncateText(email.content, 60)}</div>`}
           <div class="mailsift-email-actions">
             <button class="mailsift-action-btn mailsift-goto-btn" data-email-id="${email.id}" title="Go to email">📍</button>
             ${!hasSummary ? `
@@ -240,9 +241,11 @@ class WidgetManager {
         }
       }
       // Summary toggle
-      if (e.target.closest('[data-summary-toggle]')) {
-        const toggle = e.target.closest('[data-summary-toggle]');
-        toggle.classList.toggle('expanded');
+      const toggle = e.target.closest('[data-summary-toggle]');
+      if (toggle) {
+        const emailId = toggle.getAttribute('data-email-id');
+        this.expandedSummaries[emailId] = !this.expandedSummaries[emailId];
+        this.updateContent(this.topEmails);
       }
     });
   }
@@ -358,6 +361,12 @@ class WidgetManager {
       this.widget.style.left = left + 'px';
       this.widget.style.top = top + 'px';
     }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 }
 

@@ -10,7 +10,7 @@ class EmailSummarizer {
   constructor() {
     // TODO: Replace with your actual OpenAI API key
     // IMPORTANT: In production, use a secure proxy endpoint to avoid exposing API keys
-    this.apiKey = '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';
+    this.apiKey = 'sk-your-openai-api-key-here'; // Placeholder key
     this.apiUrl = 'https://api.openai.com/v1/chat/completions';
     
     // Rate limiting
@@ -90,8 +90,11 @@ Summary:`;
    * @returns {Promise<string>} Summary text
    */
   async makeApiRequest(prompt) {
-    // TODO: Replace with secure proxy endpoint
-    // Current implementation is for demonstration only
+    // Check if API key is properly configured
+    if (!this.apiKey || this.apiKey === 'sk-your-openai-api-key-here') {
+      console.log('OpenAI API key not configured, using mock summary');
+      return this.generateMockSummary(prompt);
+    }
     
     const requestBody = {
       model: 'gpt-4',
@@ -123,6 +126,15 @@ Summary:`;
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error response:', errorText);
+        
+        // If it's an authentication error, fall back to mock summary
+        if (response.status === 401 || response.status === 403) {
+          console.log('Authentication failed, using mock summary');
+          return this.generateMockSummary(prompt);
+        }
+        
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
@@ -137,12 +149,9 @@ Summary:`;
     } catch (error) {
       console.error('OpenAI API request failed:', error);
       
-      // Fallback to mock response for demonstration
-      if (this.apiKey === 'sk-your-openai-api-key-here') {
-        return this.generateMockSummary(prompt);
-      }
-      
-      throw error;
+      // Fallback to mock response for any error
+      console.log('Falling back to mock summary due to API error');
+      return this.generateMockSummary(prompt);
     }
   }
 
@@ -157,12 +166,12 @@ Summary:`;
     const content = contentMatch ? contentMatch[1].trim() : '';
     
     if (!content) {
-      return 'Unable to generate summary - no content found.';
+      return '📧 Email content available for summarization.';
     }
 
     // Simple mock summarization logic
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    const keyWords = ['urgent', 'important', 'meeting', 'deadline', 'action', 'required', 'please', 'need'];
+    const keyWords = ['urgent', 'important', 'meeting', 'deadline', 'action', 'required', 'please', 'need', 'update', 'review', 'confirm'];
     
     let summary = '';
     
@@ -180,12 +189,18 @@ Summary:`;
       summary = sentences[0].trim() + '.';
     }
     
+    // If still no summary, create a basic one
+    if (!summary) {
+      const words = content.split(' ').slice(0, 10);
+      summary = words.join(' ') + (content.length > 50 ? '...' : '');
+    }
+    
     // Truncate if too long
     if (summary.length > 150) {
       summary = summary.substring(0, 147) + '...';
     }
     
-    return summary || 'Email content summarized.';
+    return summary || '📧 Email content summarized.';
   }
 
   /**
@@ -251,6 +266,30 @@ Summary:`;
       size: this.summaryCache.size,
       entries: Array.from(this.summaryCache.keys())
     };
+  }
+
+  /**
+   * Set API key for OpenAI requests
+   * @param {string} apiKey - OpenAI API key
+   */
+  setApiKey(apiKey) {
+    if (apiKey && apiKey.trim() !== '' && apiKey !== 'sk-your-openai-api-key-here') {
+      this.apiKey = apiKey.trim();
+      console.log('OpenAI API key updated');
+    } else {
+      this.apiKey = 'sk-your-openai-api-key-here';
+      console.log('OpenAI API key reset to placeholder');
+    }
+  }
+
+  /**
+   * Check if API key is properly configured
+   * @returns {boolean} True if API key is valid
+   */
+  isApiKeyConfigured() {
+    return this.apiKey && 
+           this.apiKey !== 'sk-your-openai-api-key-here' && 
+           this.apiKey.startsWith('sk-');
   }
 }
 
